@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block body %}
+     <div class="row row-offcanvas row-offcanvas-right">
+
+        <div class="col-xs-12 col-sm-9">
+          <p class="pull-right visible-xs">
+            <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+          </p>
+          <div class="jumbotron">
+            <h1>Hello, BJTU!</h1>
+            <p>This is an example to show the potential of an offcanvas layout pattern in Bootstrap. Try some responsive-range viewport sizes to see it in action.</p>
+          </div>
+          <div class="row" id="courses">
+
+          </div><!--/row-->
+        </div><!--/.col-xs-12.col-sm-9-->
+
+        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
+          <div class="list-group" id="schoolList">
+          </div>
+        </div><!--/.sidebar-offcanvas.css-->
+     </div><!--/row-->
+
+
+    <script>
+        //load courses given the school id
+        function load_courses(school_id){
+            $.ajax({
+                url:'/courses/' + school_id,
+                dataType:'json',
+                success:function(courses){
+                    $('#courses').empty();
+                    for(var i = 0; i < courses.length; i++)
+                    {
+                        $('#courses').append(   '<div class="col-xs-6 col-sm-6">' +
+                                                    '<div class="panel panel-default course" id="' +
+                                                    courses[i].id + '">' +'<div class="panel-heading">' + courses[i].name +
+                                                      '（' + courses[i].teacher + '）<span style="text-align:right">' + courses[i].gradeType + '</span></div><div class="panel-body">' +
+                                                        '<div class="rateYo"></div></div></div></div>');
+                        var element = '#' + courses[i].id;
+                        $(element + ' .rateYo').rateYo({rating: courses[i].rating, readOnly: true});
+                        $(element + ' .rateYo').click({'course_id': courses[i].id}, function(event){
+                            if($.session.get('LOGIN') == undefined)
+                            {
+                                showLoginForm();
+                            }
+                            else
+                            {
+                                window.location.href = '/course/' + event.data.course_id;
+                            }
+                        });
+                    }
+                    $('.rateYo').css('cursor', 'pointer');
+                }
+            });
+        }
+
+        //get all schools info from the server
+        function init_schools(){
+             $.ajax({
+                url:'/schools',
+                dataType:'json',
+                success:function(schools){
+                    for(var i = 0; i < schools.length; i++){
+                        $('#schoolList').append('<a href="#" class="list-group-item school_item" value=' +
+                            schools[i].id + '>' + schools[i].name + '</a>');
+                    }
+
+                    //set the first school active
+                    if(schools.length > 0)
+                    {
+                        $('#schoolList a:first-child').addClass('active');
+                        //load courses of this school
+                        load_courses($('#schoolList a:first-child').attr('value'));
+                    }
+
+                    $('.school_item').click(function(){
+                        //load courses
+                        load_courses($(this).attr('value'));
+
+                        //reset the active item
+                        $('#schoolList').find('.active').removeClass('active');
+                        $(this).addClass('active');
+                    });
+                }
+            });
+        }
+
+        //load courses of the school, and change the active item in school list
+        function school_clicked(node){
+            <!--load_courses(school_id);-->
+            alert($('#schoolList').find('.active').attr('value'));
+            alert($(this).val());
+        }
+
+        $(document).ready(function(){
+            init_schools();
+
+        });
+    </script>
+
+{% endblock %}
